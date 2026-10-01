@@ -1,0 +1,1083 @@
+/* =========================================================================
+   Liberados (site) e interface local do garimpo
+
+   Mobile primeiro: as regras base valem para telas pequenas e os @media
+   (min-width) acrescentam para telas maiores.
+
+   Tipografia em rem para respeitar o tamanho de fonte do navegador, alvos de
+   toque de 44px, e nenhuma informacao transmitida so por cor.
+   ========================================================================= */
+
+:root {
+  /* Calma japonesa: mesa cinza fria, folha clara, tinta sumi e um carimbo
+     vermelho (shu) so para o que esta livre. A acao e tinta, nao cor: o
+     botao cheio e escuro, e o unico acento do site e o carimbo. Os nomes
+     dos tokens ficam (azul = acao, verde = livre...) para nao reescrever
+     cada componente; o valor e que mudou. Contraste conferido em 30/09/2026. */
+  --fundo: #eceef0;          /* a mesa */
+  --papel: #f8f9fa;          /* a folha */
+  --borda: #d3d7db;          /* o fio */
+  --texto: #1d2125;          /* tinta sumi: 13,9:1 sobre a mesa */
+  --suave: #575e65;          /* 5,7:1 sobre a mesa, 6,2:1 sobre a folha */
+  --azul: #1d2125;           /* a acao e a propria tinta */
+  --verde: #b3362b;          /* carimbo shu (livre): 5,2:1 sobre a mesa */
+  --verde-claro: #f6e4e1;
+  --ambar: #7f5a12;          /* ocre (disputa): 5,4:1 */
+  --ambar-claro: #f3ead7;
+  --roxo: #33497a;           /* indigo (leilao): 7,6:1 */
+  --roxo-claro: #e6eaf3;
+  --vermelho: #7a2222;       /* alerta e erro, mais escuro que o carimbo */
+  --vermelho-claro: #f3e2e0;
+  --sobre-azul: #f8f9fa;     /* texto sobre a acao */
+  --borda-campo: #7a8189;    /* contorno de campo, 3,4:1 com a mesa */
+
+  --toque: 2.75rem;          /* 44px: alvo minimo de toque */
+  /* Dois tamanhos de letra pequena e nenhum abaixo deles (29/09/2026).
+     Eram onze valores soltos entre 11 e 13,8px, e no celular 70% das
+     letras da pagina inicial ficavam abaixo de 14px: quem abriu num
+     celular leu "pequeno e apagado". Mini e so para etiqueta e rodape de
+     grafico; todo texto de ler (ajuda, idade, aviso, legenda) usa apoio. */
+  --letra-mini: 0.8125rem;   /* 13px */
+  --letra-apoio: 0.875rem;   /* 14px */
+  /* Uma familia so, com o monoespacado reservado ao que e registro: o
+     numero do ticket, a data crua, o nome do dominio dentro do texto (na
+     lista, desde 29/09/2026, o nome vai na fonte do site; ver .dominio). O site
+     troca --fonte pela Archivo em site_modelo/extra.css; o app
+     local segue na fonte do sistema. */
+  --fonte: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fonte-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Tres raios, em vez dos cinco valores soltos que existiam: campo e
+     etiqueta, cartao e painel, dialogo. */
+  --raio-p: 0.1875rem;      /* 3px: carimbo, code */
+  --raio: 0.25rem;          /* 4px: folha, campo, botao */
+  --raio-g: 0.375rem;       /* 6px: dialogo */
+  /* A unica sombra do site, so no que flutua de verdade (dialogo e
+     cabecalho colado): cartao com sombra vira kit de SaaS. */
+  --sombra: 0 1px 2px rgba(20, 24, 28, 0.05), 0 10px 28px rgba(20, 24, 28, 0.10);
+  --gap: 0.625rem;
+}
+
+/* ------------------------------------------------------------------ tema
+
+   Tres estados, nao dois: claro, escuro e "segue o sistema", que e o padrao.
+   Um interruptor binario tiraria do usuario a preferencia que ele ja
+   configurou no aparelho.
+
+   A paleta escura aparece duas vezes de proposito. Daria para escrever uma
+   vez so com light-dark(), mas essa funcao so existe em navegador de 2024
+   para ca, e num navegador mais velho a pagina ficaria sem cor nenhuma. Como
+   o link e para compartilhar, o custo de repetir 15 linhas e menor que o de
+   quebrar para quem abrir de um aparelho antigo.
+
+   O :not([data-tema="claro"]) e o que permite escolher claro mesmo com o
+   sistema no escuro.                                                      */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --fundo: #16181b;
+    --papel: #1e2125;
+    --borda: #33373c;
+    --texto: #e8eaed;
+    --suave: #a3aab2;         /* 7,6:1 sobre a mesa escura */
+    --azul: #e8eaed;
+    --verde: #f07a6c;
+    --verde-claro: #3a1f1c;
+    --ambar: #d9b36a;
+    --ambar-claro: #33291a;
+    --roxo: #9fb3e0;
+    --roxo-claro: #1f2638;
+    --vermelho: #f0a39a;
+    --vermelho-claro: #3a2220;
+    --sobre-azul: #16181b;
+    --borda-campo: #7c838b;   /* 4,6:1 sobre a mesa escura */
+  }
+}
+
+:root[data-tema="escuro"] {
+  --fundo: #16181b;
+  --papel: #1e2125;
+  --borda: #33373c;
+  --texto: #e8eaed;
+  --suave: #a3aab2;     /* 7,6:1 sobre a mesa escura */
+  --azul: #e8eaed;
+  --verde: #f07a6c;
+  --verde-claro: #3a1f1c;
+  --ambar: #d9b36a;
+  --ambar-claro: #33291a;
+  --roxo: #9fb3e0;
+  --roxo-claro: #1f2638;
+  --vermelho: #f0a39a;
+  --vermelho-claro: #3a2220;
+  --sobre-azul: #16181b;
+  --borda-campo: #7c838b;   /* 4,6:1 sobre a mesa escura */
+}
+
+/* avisa o navegador para pintar scrollbar, formulario e menu de contexto
+   no tom certo */
+:root { color-scheme: light; }
+:root[data-tema="escuro"] { color-scheme: dark; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) { color-scheme: dark; }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--fonte);
+  font-size: 1rem;
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+  background: var(--fundo);
+  color: var(--texto);
+}
+
+/* Link sem cor propria segue o tema. Sem isto o "por ramo" dos passos e os
+   links do dialogo da ficha (fora da .prosa) saiam no azul padrao do
+   navegador (#0000EE, roxo depois de visitado), fora do sistema e do tema
+   escuro. Classe vence elemento: componente com cor propria continua
+   mandando. */
+a { color: var(--azul); text-underline-offset: 0.18em; }
+
+/* O que o navegador desenha tambem leva o tema: selecao de texto e cursor
+   no azul da acao. A selecao so dentro do @supports: com var() a declaracao
+   passa no parse, e num navegador sem color-mix() ela vira transparent na
+   hora de calcular, e a selecao some (iOS 15, Chrome antes do 111). */
+@supports (color: color-mix(in srgb, red, red)) {
+  ::selection { background: color-mix(in srgb, var(--azul) 24%, transparent); }
+}
+input, textarea { caret-color: var(--azul); }
+
+.escondido { display: none !important; }
+.espacador { flex: 1; }
+
+/* so para leitor de tela: usado onde a cor sozinha nao basta */
+.sr-apenas {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* foco sempre visivel; nunca outline:none sem substituto */
+:focus-visible {
+  outline: 2px solid var(--azul);
+  outline-offset: 2px;
+  border-radius: var(--raio);
+}
+
+/* Primeiro parada de Tab em toda pagina, so no site: sem isso, quem usa
+   so o teclado passa pelas 8 abas e o botao de tema antes do conteudo. */
+.pular {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  z-index: 20;
+  padding: 0.5rem 0.75rem;
+  background: var(--papel);
+  color: var(--texto);
+  border: 2px solid var(--azul);
+  border-radius: var(--raio);
+  text-decoration: none;
+}
+.pular:focus { top: 0.5rem; }
+main:focus { outline: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ------------------------------------------------------------- cabecalho
+
+   No celular sao duas linhas e so: marca + idade + tema em cima, abas
+   embaixo. Antes a contagem com data completa ("13.777 dominios ·
+   11/09/2026 06:31") nao cabia ao lado do nome e empurrava tudo para uma
+   terceira linha. A contagem ja esta no cartao "Todos verificados" e a data
+   completa no rodape e no title; aqui fica so a idade, que e o que muda a
+   decisao.
+
+   Fixo no topo so em tela larga: no celular, 100px presos em cima de uma
+   tela de 700px custavam um sexto da lista o tempo todo.                 */
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem var(--gap);
+  padding: 0.375rem 1rem 0;
+  background: var(--papel);
+  border-bottom: 1px solid var(--borda);
+  position: relative;
+  z-index: 10;
+}
+
+header h1, .marca-nome {
+  font-size: clamp(1.1rem, 1rem + 0.6vw, 1.375rem);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+/* No site a marca e um link para a raiz, nao o h1: cada pagina tem o seu */
+a.marca-nome { color: inherit; text-decoration: none; }
+a.marca-nome:hover { color: var(--azul); }
+/* O sufixo no mesmo desenho dos dominios da tabela: e um pedaco de nome de
+   dominio, e a pagina inteira escreve dominio em monoespacada. */
+header .br {
+  font-family: var(--fonte-mono);
+  font-weight: 600;
+  font-size: 0.86em;
+  color: var(--azul);
+  margin-left: 0.04em;
+}
+
+.cabecalho-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  min-width: 0;
+}
+.carimbo {
+  font-size: var(--letra-mini);
+  color: var(--suave);
+  white-space: nowrap;
+}
+/* Nas ultimas 48 h o prazo e a noticia; em tela estreita ele toma o lugar
+   da idade em vez de quebrar a linha. */
+@media (max-width: 26rem) {
+  .cabecalho-acoes:has(.prazo:not(.escondido)) .carimbo { display: none; }
+}
+
+/* min-height: o rodape nasce abaixo da dobra. Sem isso ele aparecia colado
+   nos cartoes e descia quando a tabela chegava, e o Lighthouse contava. */
+main {
+  max-width: 75rem;
+  margin: 0 auto;
+  padding: 1rem;
+  min-height: 100dvh;
+}
+
+@media (min-width: 48rem) {
+  header {
+    padding: 0.625rem 1.25rem;
+    position: sticky;
+    top: 0;
+  }
+  main { padding: 1.25rem; }
+}
+
+/* ---------------------------------------------------------------- botoes */
+button, .botao-link {
+  font: inherit;
+  font-size: 0.875rem;
+  min-height: var(--toque);
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--raio);
+  border: 1px solid var(--borda);
+  background: var(--papel);
+  color: var(--texto);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+button:hover, .botao-link:hover { border-color: var(--suave); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.primario { background: var(--azul); border-color: var(--azul); color: var(--sobre-azul); }
+button.primario:hover { filter: brightness(1.08); }
+/* Sem uso no site hoje (so .aviso.perigo, que nao e botao); no escuro
+   #fff sobre --vermelho da 2,1:1. Se entrar um dia, precisa de um token
+   como --sobre-azul, nao deste #fff fixo. */
+button.perigo { background: var(--vermelho); border-color: var(--vermelho); color: #fff; }
+button.discreto { background: transparent; color: var(--suave); }
+button.discreto:hover { color: var(--texto); }
+
+/* ------------------------------------------------------------- progresso */
+.progresso {
+  background: var(--papel);
+  border-bottom: 1px solid var(--borda);
+  padding: 0.625rem 1rem;
+  position: sticky;
+  top: 3.5rem;
+  z-index: 9;
+}
+.barra {
+  height: 0.375rem;
+  background: var(--borda);
+  border-radius: 999px;
+  overflow: hidden;
+}
+#barra-preenche {
+  height: 100%;
+  width: 0;
+  background: var(--azul);
+  transition: width 0.3s;
+}
+#barra-preenche.indeterminado {
+  background: repeating-linear-gradient(
+    90deg, var(--azul) 0 0.875rem, transparent 0.875rem 1.75rem);
+  animation: desliza 0.8s linear infinite;
+}
+@keyframes desliza { to { background-position: 1.75rem 0; } }
+
+.progresso-texto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+  font-size: var(--letra-apoio);
+  margin-top: 0.375rem;
+}
+.progresso-texto span { color: var(--suave); }
+
+/* --------------------------------------------------------------- cartoes */
+.cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--gap);
+}
+.cartao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.1875rem;
+  padding: 0.9375rem 0.875rem 1rem;
+  text-align: left;
+  min-height: 5.5rem;
+  border-radius: var(--raio);
+  border: 1px solid var(--borda);
+  background: var(--papel);
+}
+.cartao:hover { border-color: var(--azul); }
+.cartao[aria-pressed="true"] {
+  border-color: var(--azul);
+  box-shadow: inset 0 0 0 1px var(--azul);
+}
+.cartao .numero {
+  /* O numero e a coisa com voz alta da pagina: tudo em volta fica quieto */
+  font-size: clamp(1.5rem, 1.25rem + 1.1vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.cartao .titulo { font-size: var(--letra-apoio); font-weight: 600; letter-spacing: -0.005em; }
+.cartao .ajuda { font-size: var(--letra-apoio); color: var(--suave); line-height: 1.45; }
+.cartao.destaque { background: var(--verde-claro); }
+.cartao.destaque .numero, .cartao.bom .numero { color: var(--verde); }
+.cartao.alerta .numero { color: var(--ambar); }
+.cartao.leilao .numero { color: var(--roxo); }
+.cartao.neutro .numero { color: var(--suave); }
+/* Cartao vazio continua no lugar (a ordem ensina o que vale mais), mas sem o
+   fundo verde de destaque: zero joias nao e destaque. */
+.cartao.zerado { background: var(--papel); }
+.cartao.zerado .numero { color: var(--suave); }
+
+/* A explicacao do cartao escolhido: so no celular, onde ela sai de dentro
+   dos cartoes. */
+.explica-filtro { display: none; }
+
+@media (max-width: 40rem) {
+  .cartoes { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .cartao { min-height: 0; padding: 0.5rem 0.625rem; gap: 0; }
+  .cartao .numero { font-size: 1.35rem; }
+  .cartao .titulo { font-size: var(--letra-mini); line-height: 1.25; }
+  .cartao .ajuda { display: none; }
+  .explica-filtro {
+    display: block;
+    margin: 0.5rem 0.125rem 0;
+    font-size: var(--letra-apoio);
+    line-height: 1.5;
+    min-height: 1.5em;        /* chega com o JSON; sem reserva, empurrava tudo */
+    color: var(--texto);
+  }
+}
+@media (min-width: 22rem) and (max-width: 40rem) {
+  .cartoes { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Altura reservada: o texto chega depois do dados.json, e crescer de zero
+   para tres linhas empurrava os filtros e a tabela (CLS 0,56 no
+   Lighthouse). A reserva cobre o texto na largura tipica de cada faixa. */
+.rodape-painel {
+  font-size: var(--letra-apoio);
+  line-height: 1.5;
+  color: var(--suave);
+  margin: 0.625rem 0.125rem 0;
+  min-height: 6em;            /* 4 linhas no celular */
+}
+@media (min-width: 48rem) {
+  .rodape-painel { min-height: 3em; }
+}
+
+/* ------------------------------------------------------------- controles */
+#controles { margin: 1.25rem 0 0.875rem; }
+.linha {
+  display: flex;
+  gap: var(--gap);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.linha.secundaria { margin-top: 0.625rem; }
+
+#busca {
+  flex: 1 1 12rem;
+  font: inherit;
+  font-size: 1rem;           /* 16px evita o zoom automatico no iOS */
+  min-height: var(--toque);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--raio);
+  border: 1px solid var(--borda-campo);
+  background: var(--papel);
+  color: var(--texto);
+}
+select, input[type=number], textarea {
+  font: inherit;
+  font-size: 1rem;
+  min-height: var(--toque);
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--raio);
+  border: 1px solid var(--borda);
+  background: var(--papel);
+  color: var(--texto);
+}
+/* so o select e campo de busca: input[number] e textarea nao foram
+   auditados e a borda decorativa (--borda) segue certa para eles */
+select { border-color: var(--borda-campo); }
+/* No computador o seletor nao encolhe: cortava o proprio rotulo
+   ("Ordem: relevânc"). No celular a grade de duas colunas manda. */
+@media (min-width: 40.0625rem) {
+  #controles select { flex: 0 0 auto; }
+}
+textarea {
+  width: 100%;
+  min-height: 4.5rem;
+  font-family: var(--fonte-mono);
+  font-size: var(--letra-apoio);
+}
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--toque);
+  font-size: var(--letra-apoio);
+  color: var(--suave);
+  cursor: pointer;
+}
+.checkbox input { width: 1.1rem; height: 1.1rem; }
+.titulo-lista { font-size: 0.875rem; font-weight: 600; }
+
+/* No celular os seletores eram quatro linhas empilhadas de largura
+   irregular. Em grade de duas colunas viram duas linhas alinhadas; a busca
+   e o que se usa mais, fica com a linha inteira. */
+@media (max-width: 40rem) {
+  #controles { margin-top: 1rem; }
+  #controles .linha:first-child {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  #controles .linha:first-child > #busca { grid-column: 1 / -1; }
+  /* quinto seletor (situacao, so em lista mista): linha inteira, nao orfao */
+  #controles .linha:first-child > #situacao { grid-column: 1 / -1; }
+  /* 16px, igual a caixa com busca do site: abaixo disso o iOS da zoom ao tocar */
+  #controles select { width: 100%; min-width: 0; font-size: 1rem; }
+  #controles .checkbox { grid-column: auto; }
+}
+
+.avancado summary {
+  cursor: pointer;
+  font-size: var(--letra-apoio);
+  color: var(--suave);
+  min-height: var(--toque);
+  display: flex;
+  align-items: center;
+}
+.painel-avancado {
+  margin-top: 0.625rem;
+  padding: 0.875rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--papel);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5625rem;
+  max-width: 29rem;
+}
+.painel-avancado label { font-size: var(--letra-apoio); color: var(--suave); }
+.painel-avancado input[type=number] { width: 5.5rem; }
+.painel-avancado hr {
+  border: 0;
+  border-top: 1px solid var(--borda);
+  width: 100%;
+  margin: 0.2rem 0;
+}
+
+/* ------------------------------------------------------------- novidades */
+.novidades {
+  background: var(--ambar-claro);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+.novidades h2 { font-size: 0.875rem; margin: 0 0 0.375rem; }
+.novidades ul { margin: 0; padding-left: 1.1rem; font-size: var(--letra-apoio); }
+
+/* ---------------------------------------------------------------- tabela */
+.rolagem { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--papel);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  overflow: hidden;
+}
+th, td {
+  text-align: left;
+  padding: 0.5625rem 0.75rem;
+  border-bottom: 1px solid var(--borda);
+  vertical-align: middle;
+}
+th {
+  font-size: var(--letra-mini);
+  font-weight: 600;
+  color: var(--suave);
+  background: var(--fundo);
+}
+/* No computador a linha ganha respiro (a lista parece escolhida, nao
+   planilha); no celular a densidade continua, que e o que deixa ver mais
+   nomes por tela. */
+@media (min-width: 48rem) {
+  th, td { padding: 0.6875rem 0.875rem; }
+}
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: var(--fundo); }
+.num { text-align: right; }
+td.num { font-variant-numeric: tabular-nums; }
+.col-marca { width: 2.75rem; }
+
+/* O nome na lista sai na fonte do site, em 600 (29/09/2026). No mono do
+   sistema (Menlo, SF Mono, o do Android) nao existe o 500 que se pedia, e
+   o nome, que e o que se veio ler, era a letra mais fina da linha. */
+.dominio {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  /* break-word, nao break-all: break-all zera a largura minima do texto, e a
+     tabela automatica espremia a coluna ate cortar "mmv.com.b|r" com a linha
+     sobrando. break-word so quebra quando o nome inteiro nao cabe. */
+  overflow-wrap: break-word;
+}
+.dominio a { color: inherit; text-decoration: none; }
+.dominio a:hover { text-decoration: underline; }
+.porque { font-size: var(--letra-apoio); color: var(--suave); }
+
+.selo {
+  display: inline-block;
+  font-size: var(--letra-mini);
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.selo.sem_competicao { background: var(--verde-claro); color: var(--verde); }
+.selo.disputado { background: var(--ambar-claro); color: var(--ambar); }
+.selo.leilao { background: var(--roxo-claro); color: var(--roxo); }
+.selo.livre { background: var(--verde-claro); color: var(--verde); }
+.selo.registrado, .selo.desconhecido {
+  background: var(--fundo);
+  color: var(--suave);
+  border-color: var(--borda);
+}
+.selo.erro { background: var(--vermelho-claro); color: var(--vermelho); }
+
+/* "N links": etiqueta contornada e neutra (nao e convite nem situacao);
+   com link de site muito citado, contorno grosso e letra forte. */
+.pilula-links {
+  display: inline-block;
+  font-family: var(--fonte);
+  font-size: var(--letra-mini);
+  font-weight: 600;
+  color: var(--suave);
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  padding: 0.05rem 0.375rem;
+  border-radius: 0.25rem;
+  margin-left: 0.375rem;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.pilula-links.citado {
+  color: var(--texto);
+  border: 2px solid var(--borda-campo);
+  font-weight: 700;
+}
+/* e botao (abre quem aponta): desfaz a altura e o padding de botao, como o
+   button.competindo-botao, para a linha nao dobrar de altura */
+button.pilula-links {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;              /* 24px: o alvo minimo do WCAG 2.2 AA */
+  line-height: 1.3;
+  cursor: pointer;
+}
+button.pilula-links:hover { border-color: var(--azul); color: var(--azul); }
+button.pilula-links:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+
+/* O dialogo de quem aponta (lista/links.js). Tres faixas: cabecalho, lista
+   e acoes. So a do meio rola, entao "Fechar" e a ficha ficam a vista com
+   milhares de nomes, e nao ha rolagem dentro de rolagem. display: flex so
+   com [open]: sem o atributo, o navegador esconde o dialogo por display. */
+.dialogo.dialogo-links {
+  width: min(40rem, calc(100vw - 2rem));
+  max-height: min(44rem, calc(100dvh - 2rem));
+}
+.dialogo-links[open] { display: flex; flex-direction: column; }
+.dialogo-disputa.dialogo-links .dialogo-corpo {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+}
+.links-cabeca { padding: 1.125rem 1.25rem 0.875rem; border-bottom: 1px solid var(--borda); }
+.dialogo-links .links-cabeca h2 { margin: 0 0 0.25rem; overflow-wrap: anywhere; }
+/* o titulo recebe o foco inicial so para o leitor de tela; nao e controle,
+   como o main:focus acima */
+.dialogo-links .links-cabeca h2:focus { outline: none; }
+.dialogo-links .links-cabeca .disputa-resumo { margin: 0; }
+.links-rolagem {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 1.25rem 1rem;
+}
+.dialogo-links .links-fonte { margin: 1.25rem 0 0; }
+.dialogo-disputa .links-acoes {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--borda);
+}
+
+/* Os grupos de quem aponta, iguais no dialogo e na ficha (ficha.js). A
+   lista e uma grade, nao `columns`: coluna de texto desalinha a segunda
+   coluna quando o primeiro item tem margem. O fio entre as linhas separa
+   nomes compridos que quebram. Muito citado pesa mais, plataforma fica
+   apagada: o peso diz o que o rotulo do grupo ja disse. Tudo sob
+   .links-grupo, para vencer o .prosa ul/li/p da ficha e o .dialogo p. */
+.links-grupo { margin: 1.125rem 0 0; }
+.links-grupo .links-titulo { font-size: 0.95rem; font-weight: 600; margin: 0 0 0.125rem; }
+.links-grupo .links-titulo span { color: var(--suave); font-weight: 500; }
+.links-grupo .links-explica { font-size: var(--letra-apoio); color: var(--suave); margin: 0 0 0.25rem; }
+.links-grupo .links-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  column-gap: 1.5rem;
+  font-size: 0.9375rem;
+}
+.links-grupo .links-lista li {
+  margin: 0;
+  padding: 0.4375rem 0;
+  border-bottom: 1px solid var(--borda);
+  overflow-wrap: anywhere;
+}
+.links-grupo .links-lista.citados li { font-weight: 600; }
+.links-grupo .links-lista.plataformas li { color: var(--suave); }
+
+/* A cor sozinha nao pode carregar o significado: cada nivel tem
+   forma propria (preenchido / contornado / contornado grosso) e um texto
+   so para leitor de tela. */
+.competindo {
+  display: inline-block;
+  min-width: 2rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--raio);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.competindo-zero { background: var(--verde-claro); color: var(--verde); }
+.competindo-pouco {
+  color: var(--ambar);
+  border: 1px solid currentColor;
+}
+.competindo-muito {
+  color: var(--vermelho);
+  border: 2px solid currentColor;
+}
+.competindo-nulo { color: var(--suave); }
+
+.marcador {
+  background: none;
+  border: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  min-height: var(--toque);
+  min-width: var(--toque);
+  padding: 0;
+  color: var(--borda);
+}
+.marcador[aria-pressed="true"] { color: var(--ambar); }
+
+.pilula-elegivel {
+  display: inline-block;
+  font-family: var(--fonte);
+  font-size: var(--letra-mini);
+  font-weight: 600;
+  color: var(--roxo);
+  background: var(--roxo-claro);
+  padding: 0.05rem 0.375rem;
+  border-radius: 0.25rem;
+  margin-left: 0.375rem;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.aviso-marca { color: var(--vermelho); font-size: var(--letra-apoio); }
+
+/* O .com do mesmo nome (pontocom.js). A pilula existe em toda linha, mas so
+   aparece com o interruptor "Mostrar o .com" ligado: desligado, a lista fica
+   como sempre foi. A cor nao carrega o estado sozinha: livre e
+   preenchido com visto, a venda e preenchido, caindo e tracejado com seta,
+   tem dono e so texto, e o texto diz tudo. 24px de altura, o alvo minimo,
+   sem dobrar a linha da tabela; sem margem, porque quem separa do nome e um
+   espaco no HTML, que some se a pilula quebrar de linha. */
+:root:not(.com-ligado) .pontocom { display: none; }
+button.pontocom {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 1.5rem;
+  padding: 0 0.45rem;
+  font-family: var(--fonte);
+  font-size: var(--letra-mini);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  vertical-align: middle;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--suave);
+  background: transparent;
+}
+button.pontocom:hover { border-color: var(--suave); }
+/* "tem dono" era so texto, sem borda: parecia rotulo, nao algo que abre. O
+   contorno fino e o mesmo das outras pilulas neutras. */
+button.pontocom-com_dono { border-color: var(--borda); }
+
+/* Pilula que abre detalhe (a ficha do .com, a lista de quem aponta): uma
+   seta fina no fim diz "toque para ver" sem cara de botao de formulario.
+   Feita de borda, nao de caractere, para ter a mesma espessura em qualquer
+   fonte e tema; so decora (o texto para leitor de tela ja diz que abre). */
+button.pontocom::after, button.pilula-links::after {
+  content: "";
+  flex: none;
+  width: 0.34em;
+  height: 0.34em;
+  margin-left: 0.2em;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  opacity: 0.55;
+}
+button.pontocom:hover::after, button.pilula-links:hover::after { opacity: 0.9; }
+button.pontocom:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+.pontocom-espera { color: var(--suave); font-style: italic; }
+/* com o seletor de button: sem ele, o transparente de button.pontocom ganhava
+   e o "livre" saia sem o fundo que o distingue */
+button.pontocom-livre { background: var(--verde-claro); color: var(--verde); }
+button.pontocom-a_venda { background: var(--ambar-claro); color: var(--ambar); }
+button.pontocom-caindo { border-style: dashed; border-color: currentColor; color: var(--ambar); }
+button.pontocom-erro { border-style: dashed; border-color: currentColor; color: var(--vermelho); }
+
+/* O interruptor: um so controle na barra da lista, com um trilho que diz
+   ligado/desligado pela forma (a bolinha muda de lado), nao so pela cor. */
+button.alternador-com {
+  gap: 0.45rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.625rem;
+  font-size: var(--letra-apoio);
+  font-weight: 600;
+  color: var(--texto);
+  border-radius: 999px;
+}
+button.alternador-com::before {
+  content: "";
+  width: 1.6rem;
+  height: 0.95rem;
+  flex: none;
+  border-radius: 999px;
+  border: 1px solid var(--suave);
+  background: radial-gradient(circle at 0.45rem 50%, var(--suave) 0.3rem, transparent 0.32rem);
+}
+button.alternador-com[aria-pressed="true"] { border-color: var(--azul); color: var(--azul); }
+button.alternador-com[aria-pressed="true"]::before {
+  border-color: var(--azul);
+  background: var(--azul) radial-gradient(circle at calc(100% - 0.45rem) 50%, var(--papel) 0.3rem, transparent 0.32rem);
+}
+/* sempre no fluxo, mesmo vazia: regiao role=status que nasce de display:none
+   junto com o texto costuma nao ser anunciada */
+.pontocom-status { font-size: var(--letra-apoio); color: var(--suave); margin: 0.25rem 0 0; min-height: 1.2em; }
+
+/* A ficha do .com: tres faixas, como o dialogo de quem aponta. Largo o
+   bastante para "oculto por um servico de privacidade" caber numa linha;
+   a ficha em linhas com fio, rotulo apagado e valor na cor do texto. */
+.dialogo.dialogo-pontocom {
+  width: min(34rem, calc(100vw - 2rem));
+  max-height: min(44rem, calc(100dvh - 2rem));
+}
+/* cabeca e acoes fixas, so a ficha rola: no celular a ficha passa da tela e
+   o Fechar ficava depois da nota, fora da vista */
+.dialogo-pontocom[open] { display: flex; flex-direction: column; }
+.dialogo-disputa.dialogo-pontocom .dialogo-corpo {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+}
+.pontocom-cabeca h2 { margin: 0 0 0.25rem; overflow-wrap: anywhere; }
+.pontocom-cabeca h2:focus { outline: none; }
+.pontocom-cabeca .pontocom-resumo { font-size: 0.9375rem; margin: 0; }
+.pontocom-cabeca .disputa-status { margin: 0.25rem 0 0; }
+.pontocom-corpo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.25rem 1.25rem 1rem;
+}
+.pontocom-ficha {
+  display: grid;
+  grid-template-columns: minmax(7.5rem, max-content) 1fr;
+  margin: 0 0 0.875rem;
+  font-size: 0.9375rem;
+}
+.pontocom-ficha:empty, .dialogo-pontocom .disputa-status:empty { display: none; }
+.pontocom-ficha dt, .pontocom-ficha dd {
+  margin: 0;
+  padding: 0.5625rem 0;
+  border-bottom: 1px solid var(--borda);
+}
+.pontocom-ficha dt { color: var(--suave); padding-right: 1.25rem; }
+.pontocom-ficha dd { overflow-wrap: anywhere; }
+.pontocom-ficha > :nth-last-child(-n + 2) { border-bottom: 0; }
+.pontocom-fonte { margin: 0; }
+/* as acoes numa linha: os links de texto a esquerda, Fechar a direita */
+.dialogo-disputa .pontocom-acoes { justify-content: space-between; }
+.pontocom-links { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
+.pontocom-link {
+  font-size: var(--letra-apoio);
+  font-weight: 600;
+  color: var(--azul);
+  text-decoration: none;
+  padding: 0.375rem 0;
+}
+.pontocom-link:hover { text-decoration: underline; text-underline-offset: 0.2em; }
+@media (max-width: 30rem) {
+  /* no celular os dois links e o Fechar nao cabem numa linha: duas linhas de
+     proposito, os links repartindo a primeira e o Fechar inteiro embaixo,
+     em vez de um Fechar solto a esquerda */
+  .pontocom-links { flex: 1 1 100%; justify-content: space-between; }
+  .dialogo-disputa .pontocom-acoes .discreto { flex: 1 1 100%; }
+  .pontocom-ficha { grid-template-columns: 1fr; }
+  .pontocom-ficha dt { padding: 0.5rem 0 0; border-bottom: 0; }
+  .pontocom-ficha dd { padding-top: 0.125rem; }
+  .pontocom-ficha > dt:nth-last-child(2) { border-bottom: 0; }
+}
+
+.vazio { padding: 2.5rem 1rem; text-align: center; color: var(--suave); }
+.paginacao {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 0 1.875rem;
+  font-size: var(--letra-apoio);
+  color: var(--suave);
+}
+
+/* ------------------------------------------------ tabela vira lista no
+   celular. Seis colunas em 375px viravam rolagem horizontal a cada linha.
+   Trocar o display de elementos de tabela apaga a semantica implicita, por
+   isso o HTML declara role="table"/"row"/"cell" explicitamente. */
+@media (max-width: 40rem) {
+  .rolagem { overflow-x: visible; }
+
+  table { border-radius: var(--raio); }
+  thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  table, tbody, tr, td { display: block; }
+
+  tbody tr {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "marca dominio  competindo"
+      "marca situacao competindo"
+      "marca porque   acao";
+    align-items: center;
+    gap: 0.2rem 0.625rem;
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--borda);
+  }
+  tbody td { border: 0; padding: 0; }
+
+  td.col-marca      { grid-area: marca; }
+  /* min-width 0 deixa a celula da grade encolher; sem isso um nome longo
+     alargaria o cartao alem da tela em vez de quebrar */
+  td.dominio        { grid-area: dominio; min-width: 0; overflow-wrap: anywhere; }
+  td.col-situacao   { grid-area: situacao; }
+  td.col-competindo { grid-area: competindo; text-align: right; }
+  /* a nota some: e apoio de ordenacao, e a ordenacao continua no seletor */
+  td.col-nota       { display: none; }
+  td.porque         { grid-area: porque; }
+  td.col-acao       { grid-area: acao; text-align: right; }
+
+  .paginacao button { flex: 1; }
+}
+
+/* ------------------------------------------------------- regua da rodada
+
+   A rodada e uma janela de 7 dias com prazo. A regua mostra onde estamos
+   dentro dela: preenche da esquerda para a direita conforme o tempo corre.
+   Fica colada na base do cabecalho, entao nao ocupa altura nenhuma.
+
+   Sem animacao continua de proposito: a largura e calculada uma vez no
+   carregamento. Um relogio rodando o dia todo custaria bateria para
+   informar algo que muda de hora em hora.                                */
+
+.regua {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;              /* cobre a borda do cabecalho */
+  height: 3px;
+  background: var(--borda);
+}
+
+.regua span {
+  display: block;
+  height: 100%;
+  width: var(--decorrido, 0%);
+  background: var(--verde);
+  /* a ponta arredondada e o unico enfeite: marca onde "agora" esta */
+  border-radius: 0 999px 999px 0;
+}
+
+.regua[data-fase="fim"] span { background: var(--ambar); }
+.regua[data-fase="assentando"] span { background: var(--ambar); }
+.regua[data-fase="entre"] span { background: var(--borda); }
+
+/* O prazo so vira texto quando e noticia: nas ultimas 48h e depois do
+   fechamento. Antes disso a regua ja diz o que precisa. */
+.prazo {
+  font-size: var(--letra-mini);
+  font-weight: 600;
+  color: var(--ambar);
+  white-space: nowrap;
+}
+.prazo[data-fase="entre"] { color: var(--suave); font-weight: 500; }
+
+
+/* ------------------------------------------------------- botao de tema
+
+   Um botao so, que cicla entre sistema, claro e escuro. Tres celulas lado a
+   lado deixariam o cabecalho apertado no celular, onde ele ja carrega
+   titulo, abas e contagem.
+
+   O icone mostra o estado atual; o aria-label diz o estado E o que o clique
+   faz, porque so o desenho nao conta isso.                               */
+
+.tema {
+  min-width: var(--toque);
+  padding: 0.4rem;
+  color: var(--suave);
+}
+.tema:hover { color: var(--texto); }
+.tema svg {
+  display: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* sem atributo = seguindo o sistema */
+:root:not([data-tema]) .tema .icone-sistema { display: block; }
+:root[data-tema="claro"] .tema .icone-claro { display: block; }
+:root[data-tema="escuro"] .tema .icone-escuro { display: block; }
+
+/* ---- quem disputa (web/disputa.js; usado pelo site e pelo app local) ---- */
+.dialogo-disputa { border: 1px solid var(--borda); border-radius: var(--raio-g); padding: 0;
+  box-shadow: var(--sombra);
+  max-width: min(44rem, calc(100vw - 2rem)); width: 100%; background: var(--fundo); color: var(--texto); }
+.dialogo-disputa::backdrop { background: rgba(15, 23, 32, 0.45); }
+.dialogo-disputa .dialogo-corpo { padding: 1.125rem 1.125rem 0.75rem; }
+.dialogo-disputa h2 { font-size: 1.05rem; margin: 0 0 0.375rem; }
+.disputa-resumo, .disputa-status, .disputa-nota { font-size: var(--letra-apoio); color: var(--suave); margin: 0 0 0.5rem; }
+.disputa-status { color: var(--texto); min-height: 1.2em; }
+.disputa-tabela { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 0.25rem 0 0.5rem; }
+.disputa-tabela th, .disputa-tabela td { text-align: left; padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--borda); }
+.disputa-tabela .num { text-align: right; }
+.disputa-pendente { color: var(--suave); }
+.disputa-acoes { display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
+/* .conferir (extra.css) poe display: inline-block, que vence o [hidden] do
+   navegador: sem isto o "carregar mais 0" apareceria */
+.dialogo-disputa [hidden] { display: none; }
+
+/* A contagem clicavel: a mesma pilula de .competindo (cor, borda, largura
+   minima), com um icone de pessoas que diz "toque para ver". Desfaz o que
+   o estilo base de button impoe (44px de altura, padding de botao, fundo
+   de papel) para a linha da tabela nao dobrar de altura. */
+button.competindo-botao {
+  min-height: 1.75rem;
+  min-width: 2.75rem;
+  padding: 0.1rem 0.45rem;
+  gap: 0.3rem;
+  font-size: inherit;
+  font-weight: 650;
+  line-height: 1.2;
+  background: transparent;
+  vertical-align: middle;
+}
+button.competindo-botao.competindo-pouco { border: 1px solid currentColor; }
+button.competindo-botao.competindo-muito { border: 2px solid currentColor; }
+button.competindo-botao.competindo-pouco:hover { background: var(--ambar-claro); border-color: currentColor; }
+button.competindo-botao.competindo-muito:hover { background: var(--vermelho-claro); border-color: currentColor; }
+button.competindo-botao:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+.icone-disputa {
+  width: 0.85em;
+  height: 0.85em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+button.competindo-botao:hover .icone-disputa { opacity: 1; }
+
+/* ---- ritmo da rodada (site) ---- */
+.ritmo { margin: 0.5rem 0 0; color: var(--azul); }
+.ritmo figcaption { font-size: var(--letra-apoio); color: var(--suave); margin-bottom: 0.25rem; }
+.ritmo svg { display: block; width: 100%; max-width: 32rem; height: 60px; }

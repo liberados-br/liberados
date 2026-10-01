@@ -1,0 +1,287 @@
+<!--
+titulo: Domínios .br que voltaram ao mercado
+descricao: Veja os domínios .br que o Registro.br devolve ao mercado todo mês: livres para registrar, sem concorrente na rodada ou quando um nome com dono pode voltar.
+tipo: ferramenta
+scripts: disputa.js, pontocom.js, agenda.js, ficha.js, lista/app.js
+-->
+
+  <!-- A contagem regressiva e a primeira linha da folha, acima do titulo:
+       o build poe o h1 logo antes da apresentacao quando a contagem vem
+       antes dela (paginas._miolo), e a ordem de leitura e a mesma da tela.
+       O build grava a caixa inteira (garimpo/web/paginas.relogio_da_pagina),
+       o app.js so faz o relogio andar e troca o alvo quando a pessoa toca
+       numa data. -->
+  <div id="p-relogio"></div>
+
+  <!-- A apresentacao. Sem ela a pagina abriria direto nos cartoes, e quem
+       chega por um link sem nunca ter ouvido falar do processo de liberacao
+       nao saberia o que olha.
+       Responde, nesta ordem: o que e (h1 + subtitulo), em que ponto estamos
+       (fase), como funciona (tres passos) e por que confiar (a ultima linha).
+       Os numeros sao gravados no build; a fase o app.js reescreve ao vivo. -->
+  <div class="apresentacao">
+    <p class="subtitulo" id="p-subtitulo">Todo mês o Registro.br devolve ao mercado os domínios
+      que não foram renovados, e qualquer pessoa pode se candidatar de graça.
+      Nesta rodada são <strong id="p-total-rodada">cerca de 120 mil</strong>; aqui
+      você vê quais nomes bons ainda estão sem concorrente à vista.</p>
+    <!-- A busca no topo: depois dos cartoes, no celular, ela ficaria duas
+         telas abaixo. Com 3 letras ou mais ela olha a rodada
+         inteira (todos.json, baixado no primeiro foco) e o resumo diz em que
+         situacao estao os nomes achados. Nome fora da rodada leva a ficha
+         pelo proprio resumo (lista/resumo.js), sem linha fixa aqui: a ficha
+         ja tem a aba "Quando volta" e o rodape. -->
+    <div class="busca-topo" role="search">
+      <label class="sr-apenas" for="busca">Buscar domínio</label>
+      <!-- O exemplo precisa dar resultado em qualquer mes (pizzaria dava
+           lista vazia). "loja" foi o termo com mais nomes de nota 45+ nas 87
+           rodadas guardadas desde 2017, nunca abaixo de ~190 (medido em 13/09/2026). -->
+      <!-- O modo busca: com 3 letras ou mais o app.js poe
+           body.modo-busca e a fase, o relogio, os passos e os cartoes se
+           recolhem (display: none, so por classe); resumo, filtros e lista
+           sobem para baixo da caixa. O x dentro da barra sai do modo. O HTML que
+           o robo le nao muda. -->
+      <div class="busca-campo">
+        <!-- Caixa e lupa sao uma peca so (30/09/2026): a borda e o foco sao
+             da .busca-caixa, e o botao mora dentro dela. O botao faz o mesmo
+             que o Enter: a lista ja filtra enquanto se digita, mas quem nao
+             sabe disso procura onde confirmar, e no celular e o toque nele
+             que fecha o teclado e mostra o resultado. Botao comum, sem form:
+             a CSP e form-action 'none'. -->
+        <div class="busca-caixa">
+          <input type="search" id="busca" placeholder="Buscar um nome, ex.: loja"
+                 autocomplete="off" spellcheck="false" enterkeyhint="search">
+          <!-- Um x so (30/09/2026): o nativo do type=search some pelo CSS
+               (cada navegador desenhava um, o Firefox nenhum) e este faz o
+               que o antigo "Limpar busca" fazia: esvazia, devolve o painel
+               e poe o cursor na caixa. Aparece so com texto digitado. -->
+          <button type="button" id="limpar-busca" class="limpar-busca" aria-label="Limpar busca"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button>
+          <button type="button" id="botao-buscar" class="botao-buscar" aria-label="Buscar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg><span class="botao-buscar-texto">Buscar</span></button>
+        </div>
+      </div>
+      <!-- O resumo tem botoes e e refeito a cada conferencia ao vivo: fora
+           de regiao viva. O leitor de tela ouve so a frase, pelo status. -->
+      <div id="resumo-busca" class="resumo-busca escondido"></div>
+      <p class="sr-apenas" id="resumo-busca-status" role="status"></p>
+    </div>
+    <script type="application/json" id="p-calendario">{}</script>
+    <!-- No celular os passos ficam atras deste botao (lista/dobras.js e
+         extra.css, "dobras do celular"); no computador ele nao aparece. Nasce
+         com hidden: sem script os passos ficam abertos. -->
+    <button type="button" class="dobra dobra-passos" aria-expanded="false" aria-controls="p-passos" hidden><span class="dobra-texto">Datas e como funciona</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <!-- Com a rodada fechada o build troca os passos (passos_da_pagina). -->
+    <ol class="passos" role="list" id="p-passos">
+      <li><strong>Escolha um nome</strong> na lista abaixo, busque o seu ou veja
+        <a href="/dominios/">por ramo</a>.</li>
+      <li><strong>Candidate-se no Registro.br</strong> até o fim da rodada, sem custo.</li>
+      <li><strong>Se só você pedir, é seu</strong> pela anuidade de R$&nbsp;40. Se mais
+        gente pedir, ninguém leva e o nome volta no mês seguinte, ou vai a
+        leilão se já travou em rodadas anteriores.</li>
+    </ol>
+    <!-- A ressalva das datas fica junto dos passos, que tambem as citam; o
+         build so a escreve quando ha contagem (paginas.preencher_numeros). -->
+    <p class="relogio-nota" id="p-relogio-nota"></p>
+    <!-- Como a lista foi feita (painel.js escreve): no celular fica junto
+         dos passos, recolhido com eles; no computador, sempre a vista. -->
+    <p class="rodape-painel" id="rodape-painel"></p>
+    <!-- A fase e o lembrete lado a lado. Entre rodadas a frase conta os dias
+         ate a lista sair e o botao poe a proxima rodada na agenda; com a
+         rodada aberta, o fim dela. As datas vem do build. -->
+    <div class="fase-linha">
+      <p class="fase-inicio" id="fase-inicio">Rodada atual: de
+        <span id="p-rodada-inicio">-</span> a <span id="p-rodada-fim">-</span>.
+        Próxima: <span id="p-proxima-rodada">segunda quarta-feira do mês seguinte</span>.</p>
+      <button type="button" id="lembrar-rodada" class="lembrar-rodada escondido">Me avise da próxima rodada</button>
+    </div>
+    <!-- Os numeros moram na folha, sobre um fio, logo abaixo da busca.
+         Nenhum cartao nasce marcado: o app escolhe o primeiro que tem o que
+         mostrar. Marcar Joias no HTML faria a pagina abrir numa lista vazia na
+         maior parte da rodada, quando todo elegivel ja esta em leilao. -->
+    <div class="cartoes">
+      <!-- Nasce escondido e so aparece quando ha joia: passado o primeiro dia
+           da rodada fica em zero, e "0 Joias" como primeira coisa da pagina
+           parece site quebrado para quem chega de um link. -->
+      <button class="cartao destaque escondido" type="button" data-filtro="joias" aria-pressed="false">
+        <span class="numero" id="n-joias">-</span>
+        <span class="titulo">Joias</span>
+        <span class="ajuda">Nomes que já foram muito disputados e agora estão sem candidato à vista</span>
+      </button>
+      <button class="cartao bom" type="button" data-filtro="sem_competicao" aria-pressed="false">
+        <span class="numero" id="n-sem_competicao">-</span>
+        <span class="titulo">Sem competição</span>
+        <span class="ajuda">Nenhum candidato aparece na consulta pública</span>
+      </button>
+      <button class="cartao alerta" type="button" data-filtro="disputados" aria-pressed="false">
+        <span class="numero" id="n-disputados">-</span>
+        <span class="titulo">Disputados</span>
+        <span class="ajuda">Já tem candidato; com dois ou mais, ninguém leva</span>
+      </button>
+      <!-- Rodada fechada: os que travaram voltam na proxima. Nasce escondido e
+           so aparece com o que mostrar; durante a rodada fica em zero. -->
+      <button class="cartao alerta escondido" type="button" data-filtro="aguardando" aria-pressed="false">
+        <span class="numero" id="n-aguardando">-</span>
+        <span class="titulo">Voltam na próxima rodada</span>
+        <span class="ajuda">Dois ou mais pediram e ninguém levou: voltam na próxima rodada</span>
+      </button>
+      <button class="cartao leilao" type="button" data-filtro="leilao" aria-pressed="false">
+        <span class="numero" id="n-leilao">-</span>
+        <span class="titulo">Em leilão</span>
+        <span class="ajuda">Nomes muito disputados: leva quem der o maior lance</span>
+      </button>
+      <!-- Nasce escondido, como "Livre agora": na maior parte da rodada todo
+           elegivel ja esta em leilao e o cartao seria copia de "Em leilao".
+           Esconder depois da carga move os cartoes vizinhos (CLS 0,17). -->
+      <button class="cartao escondido" type="button" data-filtro="elegiveis" aria-pressed="false">
+        <span class="numero" id="n-elegiveis">-</span>
+        <span class="titulo">Elegíveis ao leilão</span>
+        <span class="ajuda">Já acumularam rodadas travadas; some quando todos já estão em leilão</span>
+      </button>
+      <button class="cartao livre escondido" type="button" data-filtro="livres"
+              aria-pressed="false">
+        <span class="numero" id="n-livres">-</span>
+        <span class="titulo">Livre agora</span>
+        <span class="ajuda">Ficou livre: quem registrar primeiro leva, sem esperar rodada</span>
+      </button>
+      <button class="cartao neutro" type="button" data-filtro="todos" aria-pressed="false">
+        <span class="numero" id="n-todos">-</span>
+        <span class="titulo">Todos consultados</span>
+        <span class="ajuda">Os nomes com boa nota que já consultamos no Registro.br</span>
+      </button>
+      <!-- A rodada inteira so carrega quando pedida: sao ~0,8 MB comprimidos,
+           e quem so quer as joias nao precisa pagar por isso. -->
+      <button class="cartao neutro" type="button" data-filtro="rodada" aria-pressed="false">
+        <span class="numero" id="n-rodada">-</span>
+        <span class="titulo">Toda a rodada</span>
+        <span class="ajuda">Todos os nomes da lista oficial; a situação de cada um você confere na hora</span>
+      </button>
+      <button class="cartao acompanhando escondido" type="button" data-filtro="acompanhados"
+              aria-pressed="false">
+        <span class="numero" id="n-acompanhados">-</span>
+        <span class="titulo">Acompanhando</span>
+        <span class="ajuda">Os que você marcou com a estrela, neste aparelho</span>
+      </button>
+    </div>
+    <!-- No celular a explicacao sai de dentro dos cartoes (ocuparia metade da
+         tela) e aparece uma vez so, a do cartao escolhido. -->
+    <p class="explica-filtro" id="explica-filtro"></p>
+    <p class="confianca">Gratuito e independente, sem vínculo com o Registro.br.
+      Nada é vendido aqui.
+      <a href="/regras-do-br/">Entenda as regras</a> ·
+      <a href="/sobre/">Sobre o Liberados</a></p>
+  </div>
+
+
+  <!-- O que mudou nos nomes acompanhados desde a ultima visita. Vazio some. -->
+  <div id="mudancas" class="mudancas escondido" role="status" aria-live="polite"></div>
+
+  <!-- A conferencia ao vivo acontece sozinha para as joias, logo que a pagina
+       abre. Quem usa leitor de tela ouve o andamento sem precisar procurar. -->
+  <p class="rodape-painel ao-vivo-status" id="ao-vivo" aria-live="polite"></p>
+
+  <!-- No celular os seletores e as acoes da lista ficam atras deste botao,
+       que diz quantos filtros estao valendo (lista/dobras.js); o titulo da
+       lista continua a vista. No computador ele nao aparece. -->
+  <button type="button" class="dobra dobra-filtros" aria-expanded="false" aria-controls="controles-filtros acoes-lista" hidden><span class="dobra-texto">Filtros e ordem</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+  <div id="controles">
+    <div class="linha" id="controles-filtros">
+      <label class="sr-apenas" for="ordem">Ordenar por</label>
+      <select id="ordem">
+        <option value="nota">Ordem: relevância</option>
+        <option value="menos_candidatos">Ordem: menos candidatos</option>
+        <option value="candidatos">Ordem: mais candidatos</option>
+        <option value="tamanho">Ordem: mais curto</option>
+        <option value="links">Ordem: mais links</option>
+        <option value="alfabetica">Ordem: A → Z</option>
+        <option value="alfabetica_desc">Ordem: Z → A</option>
+      </select>
+      <label class="sr-apenas" for="extensao">Filtrar por extensão</label>
+      <select id="extensao">
+        <option value="">Extensão: todas</option>
+      </select>
+      <label class="sr-apenas" for="categoria">Filtrar por ramo ou tipo de nome</label>
+      <select id="categoria">
+        <option value="">Ramo: todos</option>
+      </select>
+      <label class="sr-apenas" for="marca">Filtrar por risco de marca</label>
+      <select id="marca">
+        <option value="">Marca: todas</option>
+        <option value="sem">Sem risco de marca</option>
+        <option value="so">Só possível marca</option>
+      </select>
+      <!-- So nas listas que misturam situacoes (acompanhando, todos, rodada,
+           elegiveis, lista compartilhada): nos outros cartoes a situacao ja
+           e o proprio cartao. -->
+      <label class="sr-apenas" for="situacao">Filtrar por situação</label>
+      <select id="situacao" class="escondido">
+        <option value="">Situação: todas</option>
+        <option value="sem_competicao">Sem competição</option>
+        <option value="disputado">Disputados</option>
+        <option value="leilao">Em leilão</option>
+        <option value="livre">Livres agora</option>
+        <option value="aguardando">Voltam na próxima rodada</option>
+        <option value="registrado">Registrados</option>
+        <option value="nao_verificado">Não verificados</option>
+      </select>
+    </div>
+    <!-- A barra de acoes: todo controle com a mesma altura,
+         borda, raio e letra dos filtros acima. Seletor tem seta; acao tem
+         icone e texto. No celular, a mesma grade de duas colunas dos filtros
+         (extra.css, "barra de acoes"). -->
+    <div class="linha secundaria">
+      <span id="titulo-lista" class="titulo-lista"></span>
+      <!-- As acoes andam juntas: sem o grupo, a ultima caia sozinha na linha
+           de baixo quando o titulo crescia. No celular o grupo some
+           (display: contents) e cada acao entra na grade de duas colunas. -->
+      <div class="acoes-lista" id="acoes-lista">
+      <!-- O .com do mesmo nome (web/pontocom.js): ligado, confere
+           no navegador o .com de cada nome da pagina e abre a ficha de cada um. -->
+      <button type="button" class="acao alternador-com" data-pontocom-alternar aria-pressed="false"
+              title="Confere, no seu navegador, se o mesmo nome em .com tem dono">Mostrar o .com</button>
+      <label class="sr-apenas" for="por-pagina">Nomes por página</label>
+      <select id="por-pagina">
+        <option value="25">25 por página</option>
+        <option value="50">50 por página</option>
+        <option value="100" selected>100 por página</option>
+        <option value="250">250 por página</option>
+        <option value="500">500 por página</option>
+      </select>
+      <button id="btn-lista-acompanhar" class="acao escondido" type="button">Acompanhar todos</button>
+      <button id="btn-csv" class="acao" type="button"
+              aria-label="Baixar CSV da lista que está na tela"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 10.5 12 15l4.5-4.5"/><path d="M5 19h14"/></svg><span>Baixar CSV</span></button>
+      <!-- O endereco da pagina sempre reflete o cartao e os filtros; o botao
+           compartilha esse endereco (e, em Acompanhando, a lista de nomes). -->
+      <button id="btn-compartilhar" class="acao" type="button"
+              aria-label="Compartilhar esta lista com os filtros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg><span>Compartilhar</span></button>
+      </div>
+      <span id="lista-aviso" class="link-copiado aviso-da-lista" role="status"></span>
+    </div>
+    <p class="pontocom-status" data-pontocom-status role="status"></p>
+  </div>
+
+  <!-- O nome de cada linha leva direto ao Registro.br, numa aba nova; o
+       leitor de tela ouve isso pela descricao (aria-describedby em
+       lista/linha.js). Texto escondido dentro do link iria junto quando
+       alguem copia o nome. -->
+  <span id="nota-nome-registro" hidden>abre no Registro.br, em nova aba</span>
+  <div class="rolagem">
+    <table id="tabela" role="table">
+      <thead>
+        <tr role="row">
+          <th class="col-marca" scope="col"><span class="sr-apenas">Acompanhar</span></th>
+          <th scope="col">Domínio</th>
+          <th scope="col">Situação</th>
+          <th class="num" scope="col">Competindo</th>
+          <th class="num" scope="col">Relevância</th>
+        </tr>
+      </thead>
+      <tbody id="corpo-tabela"></tbody>
+    </table>
+  </div>
+  <div id="vazio" class="vazio escondido"></div>
+  <!-- nasce escondida: visivel antes da tabela, seria empurrada pelas linhas
+       quando o JSON chega (deslocamento de layout medido no Lighthouse) -->
+  <nav class="paginacao escondido" id="paginacao" aria-label="Paginação">
+    <button id="btn-anterior" type="button">Anterior</button>
+    <span id="info-pagina" aria-live="polite"></span>
+    <button id="btn-proxima" type="button">Próxima</button>
+  </nav>
+

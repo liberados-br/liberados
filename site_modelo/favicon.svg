@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-hidden="true">
+  <!-- O selo .br carimbado: a marca do Liberados, a mesma do cabecalho.
+       As letras sao tracos, nao texto: assim o icone nao depende da fonte
+       de quem o desenha. Cores fixas (o navegador carrega este arquivo
+       sozinho como icone da aba), com uma variante escura pelo
+       prefers-color-scheme do proprio sistema. -->
+  <style>
+    .selo { fill: #f8f9fa; stroke: #b3362b; stroke-width: 2.4; }
+    .letra { fill: none; stroke: #b3362b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .ponto { fill: #b3362b; }
+    @media (prefers-color-scheme: dark) {
+      .selo { fill: #16181b; stroke: #f07a6c; }
+      .letra { stroke: #f07a6c; }
+      .ponto { fill: #f07a6c; }
+    }
+  </style>
+  <g transform="rotate(-6 16 16)">
+    <rect class="selo" x="4.5" y="4.5" width="23" height="23" rx="3"/>
+    <circle class="ponto" cx="9.6" cy="20.4" r="1.35"/>
+    <path class="letra" d="M12.6 10.6V21M12.6 18.3a2.75 2.75 0 1 0 5.5 0a2.75 2.75 0 1 0-5.5 0"/>
+    <path class="letra" d="M21 15.6V21M21 18c0.6-1.9 1.7-2.5 3.3-2.4"/>
+  </g>
+</svg>
